@@ -7,11 +7,11 @@ import {
     Container,
     Checkbox,
     ButtonGroup,
-
     List,
     ListItem,
     Flex
 } from "@chakra-ui/react";
+import { Line } from "react-chartjs-2";
 import { useEffect, useState } from "react";
 
 import { factorial, pow } from "@/utils";
@@ -30,8 +30,6 @@ export default function Home() {
         let data = {};
 
         const formattedY = y / 60;
-
-        console.log("formattedY: ", formattedY)
 
         data.u = 1 / t;
         data.p = formattedY * t;
@@ -101,6 +99,25 @@ export default function Home() {
         if (n == 1) {
             data.z_sist = data.r0 + data.p;
             data.t_sist = t + data.t0;
+        }
+
+        // for charts
+        if (n > 1) {
+            data.charts = {};
+            data.charts.y = [formattedY.toFixed(2), 1, 2, 4, 10, 50, 200];
+            data.charts.p = data.charts.y.map((item) => {
+                return item * t;
+            });
+
+            data.charts.Q = data.charts.y.map(() => {
+                return 1 - data.p_otk;
+            });
+            data.charts.A = data.charts.Q.map((item, index) => {
+                return item * data.charts.y[index];
+            })
+            data.charts.K = data.charts.A.map((item) => {
+                return item / data.u;
+            });
         }
 
         setResult(data);
@@ -186,13 +203,13 @@ export default function Home() {
                         )}
                     </Text>
                     <Text>
-                        Интенсивность потока обслуживания: { result.u }
+                        Интенсивность потока обслуживания: { result.u.toFixed(2) }
                     </Text>
                     <Text>
                         Коэффициент загрузки системы: { result.p }
                     </Text>
                     <Text>
-                        Начальная вероятность: { result.p0 }
+                        Начальная вероятность: { result.p0.toFixed(2) }
                     </Text>
                     <Flex>
                         <Text>
@@ -203,7 +220,7 @@ export default function Home() {
                                 <ListItem
                                     key={index}
                                 >
-                                    p{ index }: { item }
+                                    p{ index }: { item.toFixed(2) }
                                 </ListItem>
                             ))}
                         </List>
@@ -215,16 +232,16 @@ export default function Home() {
                         Относительная пропускная способность: { result.Q }
                     </Text>
                     <Text>
-                        Абсолютная пропускная способность: { result.A } ({ (result.A * 100).toFixed(2) }% в минуту)
+                        Абсолютная пропускная способность: { result.A.toFixed(2) } ({ (result.A * 100).toFixed(2) }% в минуту)
                     </Text>
                     <Text>
                         Среднее число занятых каналов: { result.k }
                     </Text>
                     <Text>
-                        Среднее число автомобилей в очереди: { result.r0 }
+                        Среднее число автомобилей в очереди: { result.r0.toFixed(2) }
                     </Text>
                     <Text>
-                        Время ожидания обслуживания: { result.t0 }
+                        Время ожидания обслуживания: { result.t0.toFixed(2) }
                     </Text>
                     { result.z_sist ? (
                         <Text>
@@ -235,6 +252,64 @@ export default function Home() {
                         <Text>
                             Среднее время пребывания заявки в СМО: { result.t_sist }
                         </Text>
+                    ) : null}
+
+                    { result.charts.y ? (
+                        <Text className={"mt-5"}>
+                            Различные значения λ для расчетов A и K: { result.charts.y.join(", ") }
+                        </Text>
+                    ) : null}
+                    { result.charts ? (
+                        <Line
+                            options={{
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: false,
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Зависимость среднего числа занятых линий связи от интенсивности входного потока',
+                                    },
+                                },
+                            }}
+                            data={{
+                                labels: result.charts.y,
+                                datasets: [
+                                    {
+                                        data: result.charts.K,
+                                        borderColor: 'rgb(255, 99, 132)',
+                                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                    }
+                                ]
+                            }}
+                        />
+                    ) : null}
+                    { result.charts ? (
+                        <Line
+                            options={{
+                                responsive: true,
+                                plugins: {
+                                    legend: {
+                                        display: false,
+                                    },
+                                    title: {
+                                        display: true,
+                                        text: 'Зависимость абсолютной пропускной способности от интенсивности входного потока',
+                                    },
+                                },
+                            }}
+                            data={{
+                                labels: result.charts.y,
+                                datasets: [
+                                    {
+                                        data: result.charts.A,
+                                        borderColor: 'rgb(255, 99, 132)',
+                                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                    }
+                                ]
+                            }}
+                        />
                     ) : null}
                 </Box>
             ) : null}
