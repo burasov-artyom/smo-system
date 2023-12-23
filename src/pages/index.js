@@ -31,6 +31,8 @@ export default function Home() {
 
         const formattedY = y / 60;
 
+        console.log("formattedY: ", formattedY)
+
         data.u = 1 / t;
         data.p = formattedY * t;
 
@@ -41,7 +43,12 @@ export default function Home() {
             p0 = p0 + (pow(data.p, i) / i);
         }
 
-        data.p0 = pow(p0, -1);
+        if (n > 1) {
+            data.p0 = pow(p0, -1);
+        } else {
+            data.p0 = 1 - data.p;
+        }
+
 
         // p1, p2, p3...
         data.p_array = [];
@@ -50,27 +57,51 @@ export default function Home() {
         data.p_array.push(data.p0);
 
         for (let i = 1; i <= n; i++) {
-            let p = (
-                pow(data.p, i) / factorial(i)
-            ) * data.p0;
+            if (n > 1) {
+                let p = (
+                    pow(data.p, i) / factorial(i)
+                ) * data.p0;
 
-            data.p_array.push(p);
+                data.p_array.push(p);
+            } else {
+                let p = pow(data.p, i) * (1 - data.p);
+
+                data.p_array.push(p);
+            }
         }
 
         data.p_otk = 0;
         data.Q = 1 - data.p_otk;
         data.A = data.Q * formattedY;
-        data.k = formattedY / data.u;
+
+        if (n > 1) {
+            data.k = formattedY / data.u;
+        } else {
+            data.k = data.p;
+        }
 
         // r0
-        data.r0 = (
-            pow(data.p, Number(n) + 1) * data.p0
-        ) / (
-            n * factorial(n) * pow(1 - (data.p / n), 2)
-        )
+        if (n > 1) {
+            data.r0 = (
+                pow(data.p, Number(n) + 1) * data.p0
+            ) / (
+                n * factorial(n) * pow(1 - (data.p / n), 2)
+            )
+        } else {
+            data.r0 = pow(data.p, 2) / (1 - data.p);
+        }
 
         // t0
-        data.t0 = data.r0 / formattedY;
+        if (n > 1) {
+            data.t0 = data.r0 / formattedY;
+        } else {
+            data.t0 = pow(data.p, 2) / (formattedY * (1 - data.p))
+        }
+
+        if (n == 1) {
+            data.z_sist = data.r0 + data.p;
+            data.t_sist = t + data.t0;
+        }
 
         setResult(data);
     }
@@ -195,6 +226,16 @@ export default function Home() {
                     <Text>
                         Время ожидания обслуживания: { result.t0 }
                     </Text>
+                    { result.z_sist ? (
+                        <Text>
+                            Среднее число заявок в СМО: { result.z_sist }
+                        </Text>
+                    ) : null}
+                    { result.t_sist ? (
+                        <Text>
+                            Среднее время пребывания заявки в СМО: { result.t_sist }
+                        </Text>
+                    ) : null}
                 </Box>
             ) : null}
         </Container>
