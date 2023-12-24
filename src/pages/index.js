@@ -101,24 +101,21 @@ export default function Home() {
             data.t_sist = t + data.t0;
         }
 
-        // for charts
-        if (n > 1) {
-            data.charts = {};
-            data.charts.y = [formattedY.toFixed(2), 1, 2, 4, 10, 50, 200];
-            data.charts.p = data.charts.y.map((item) => {
-                return item * t;
-            });
+        data.charts = {};
+        data.charts.y = [formattedY.toFixed(2), 1, 2, 4, 10, 50, 200];
+        data.charts.p = data.charts.y.map((item) => {
+            return item * t;
+        });
 
-            data.charts.Q = data.charts.y.map(() => {
-                return 1 - data.p_otk;
-            });
-            data.charts.A = data.charts.Q.map((item, index) => {
-                return item * data.charts.y[index];
-            })
-            data.charts.K = data.charts.A.map((item) => {
-                return item / data.u;
-            });
-        }
+        data.charts.Q = data.charts.y.map(() => {
+            return 1 - data.p_otk;
+        });
+        data.charts.A = data.charts.Q.map((item, index) => {
+            return item * data.charts.y[index];
+        })
+        data.charts.K = data.charts.A.map((item) => {
+            return item / data.u;
+        });
 
         setResult(data);
     }
@@ -206,7 +203,7 @@ export default function Home() {
                         Интенсивность потока обслуживания: { result.u.toFixed(2) }
                     </Text>
                     <Text>
-                        Коэффициент загрузки системы: { result.p }
+                        Коэффициент загрузки системы: { result.p.toFixed(2) }
                     </Text>
                     <Text>
                         Начальная вероятность: { result.p0.toFixed(2) }
@@ -235,7 +232,7 @@ export default function Home() {
                         Абсолютная пропускная способность: { result.A.toFixed(2) } ({ (result.A * 100).toFixed(2) }% в минуту)
                     </Text>
                     <Text>
-                        Среднее число занятых каналов: { result.k }
+                        Среднее число занятых каналов: { result.k.toFixed(2) }
                     </Text>
                     <Text>
                         Среднее число автомобилей в очереди: { result.r0.toFixed(2) }
@@ -245,16 +242,16 @@ export default function Home() {
                     </Text>
                     { result.z_sist ? (
                         <Text>
-                            Среднее число заявок в СМО: { result.z_sist }
+                            Среднее число заявок в СМО: { result.z_sist.toFixed(2) }
                         </Text>
                     ) : null}
                     { result.t_sist ? (
                         <Text>
-                            Среднее время пребывания заявки в СМО: { result.t_sist }
+                            Среднее время пребывания заявки в СМО: { result.t_sist.toFixed(2) }
                         </Text>
                     ) : null}
 
-                    { result.charts.y ? (
+                    { result.charts ? (
                         <Text className={"mt-5"}>
                             Различные значения λ для расчетов A и K: { result.charts.y.join(", ") }
                         </Text>
