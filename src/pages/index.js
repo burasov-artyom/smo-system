@@ -25,6 +25,8 @@ export default function Home() {
     const [endlessQueue, setEndlessQueue] = useState(true)
 
     const [result, setResult] = useState(null);
+
+    const [errorValue, setErrorValue] = useState(false);
     const [smoError, setSmoError] = useState(false);
 
     const onCulculate = () => {
@@ -37,11 +39,13 @@ export default function Home() {
         if (n > 1) {
             const condition = data.p / n;
             if (condition >= 1) {
+                setErrorValue(condition);
                 setSmoError(true);
                 return;
             }
         } else {
             if (data.p >= 1) {
+                setErrorValue(data.p);
                 setSmoError(true);
                 return;
             }
@@ -206,6 +210,7 @@ export default function Home() {
     useEffect(() => {
         setResult(null);
         setSmoError(false);
+        setErrorValue(null);
     }, [n, y, t, queueCount, endlessQueue])
 
     return (
@@ -285,7 +290,7 @@ export default function Home() {
             { smoError ? (
                 <Box>
                     <Text>
-                        СМО не работает из-за неограниченно возрастающей очереди
+                        Коэффициент загрузки системы равен { errorValue.toFixed(2) } (&gt;= 1). СМО не работает из-за неограниченно возрастающей очереди
                     </Text>
                 </Box>
             ) : null}
@@ -353,13 +358,65 @@ export default function Home() {
                         </Text>
                     ) : null}
 
+                    {/*{ result.tables.r0_through_y ? (*/}
+                    {/*    <Line*/}
+                    {/*        options={{*/}
+                    {/*            responsive: true,*/}
+                    {/*            plugins: {*/}
+                    {/*                legend: {*/}
+                    {/*                    display: false,*/}
+                    {/*                },*/}
+                    {/*                title: {*/}
+                    {/*                    display: true,*/}
+                    {/*                    text: 'Зависимость средней длины очереди от интенсивности входного потока',*/}
+                    {/*                },*/}
+                    {/*            },*/}
+                    {/*        }}*/}
+                    {/*        data={{*/}
+                    {/*            labels: result.tables.r0_through_y.y,*/}
+                    {/*            datasets: [*/}
+                    {/*                {*/}
+                    {/*                    data: result.tables.r0_through_y.x,*/}
+                    {/*                    borderColor: 'rgb(255, 99, 132)',*/}
+                    {/*                    backgroundColor: 'rgba(255, 99, 132, 0.5)',*/}
+                    {/*                }*/}
+                    {/*            ]*/}
+                    {/*        }}*/}
+                    {/*    />*/}
+                    {/*) : null}*/}
+
+                    {/*{ result.tables.r0_through_t ? (*/}
+                    {/*    <Line*/}
+                    {/*        options={{*/}
+                    {/*            responsive: true,*/}
+                    {/*            plugins: {*/}
+                    {/*                legend: {*/}
+                    {/*                    display: false,*/}
+                    {/*                },*/}
+                    {/*                title: {*/}
+                    {/*                    display: true,*/}
+                    {/*                    text: 'Зависимость средней длины очереди от времени обслуживания',*/}
+                    {/*                },*/}
+                    {/*            },*/}
+                    {/*        }}*/}
+                    {/*        data={{*/}
+                    {/*            labels: result.tables.r0_through_t.y,*/}
+                    {/*            datasets: [*/}
+                    {/*                {*/}
+                    {/*                    data: result.tables.r0_through_t.x,*/}
+                    {/*                    borderColor: 'rgb(255, 99, 132)',*/}
+                    {/*                    backgroundColor: 'rgba(255, 99, 132, 0.5)',*/}
+                    {/*                }*/}
+                    {/*            ]*/}
+                    {/*        }}*/}
+                    {/*    />*/}
+                    {/*) : null}*/}
                     { result.charts ? (
                         <Text className={"mt-5"}>
                             Различные значения λ для расчетов A и K: { result.charts.y.join(", ") }
                         </Text>
                     ) : null}
-
-                    { result.tables.r0_through_y ? (
+                    { result.charts ? (
                         <Line
                             options={{
                                 responsive: true,
@@ -369,15 +426,15 @@ export default function Home() {
                                     },
                                     title: {
                                         display: true,
-                                        text: 'Зависимость средней длины очереди от интенсивности входного потока',
+                                        text: 'Зависимость среднего числа занятых линий связи от интенсивности входного потока',
                                     },
                                 },
                             }}
                             data={{
-                                labels: result.tables.r0_through_y.y,
+                                labels: result.charts.y,
                                 datasets: [
                                     {
-                                        data: result.tables.r0_through_y.x,
+                                        data: result.charts.K,
                                         borderColor: 'rgb(255, 99, 132)',
                                         backgroundColor: 'rgba(255, 99, 132, 0.5)',
                                     }
@@ -385,8 +442,7 @@ export default function Home() {
                             }}
                         />
                     ) : null}
-
-                    { result.tables.r0_through_t ? (
+                    { result.charts ? (
                         <Line
                             options={{
                                 responsive: true,
@@ -396,15 +452,15 @@ export default function Home() {
                                     },
                                     title: {
                                         display: true,
-                                        text: 'Зависимость средней длины очереди от времени обслуживания',
+                                        text: 'Зависимость абсолютной пропускной способности от интенсивности входного потока',
                                     },
                                 },
                             }}
                             data={{
-                                labels: result.tables.r0_through_t.y,
+                                labels: result.charts.y,
                                 datasets: [
                                     {
-                                        data: result.tables.r0_through_t.x,
+                                        data: result.charts.A,
                                         borderColor: 'rgb(255, 99, 132)',
                                         backgroundColor: 'rgba(255, 99, 132, 0.5)',
                                     }
