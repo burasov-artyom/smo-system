@@ -18,40 +18,51 @@ import { factorial, pow } from "@/utils";
 
 export default function Home() {
     const [n, setN] = useState(2);
-    const [y, setY] = useState(17);
+    const [y, setY] = useState(0.2833);
     const [t, setT] = useState(6);
 
     const [queueCount, setQueueCount] = useState(null);
     const [endlessQueue, setEndlessQueue] = useState(true)
 
     const [result, setResult] = useState(null);
+    const [smoError, setSmoError] = useState(false);
 
     const onCulculate = () => {
         let data = {};
 
-        const formattedY = y / 60;
-
         data.u = 1 / t;
-        data.p = formattedY * t;
+
+        data.p = y / data.u;
+
+        if (n > 1) {
+            const condition = data.p / n;
+            if (condition >= 1) {
+                setSmoError(true);
+                return;
+            }
+        } else {
+            if (data.p >= 1) {
+                setSmoError(true);
+                return;
+            }
+        }
 
         // p0
         let p0 = 1;
 
-        for (let i = 1; i <= n; i++) {
-            p0 = p0 + (pow(data.p, i) / i);
-        }
-
         if (n > 1) {
+            for (let i = 1; i <= n; i++) {
+                p0 = p0 + (pow(data.p, i) / i);
+            }
+
             data.p0 = pow(p0, -1);
         } else {
-            data.p0 = 1 - data.p;
+            data.p0 = p0 - data.p;
         }
 
 
         // p1, p2, p3...
         data.p_array = [];
-
-        // TODO: check
         data.p_array.push(data.p0);
 
         for (let i = 1; i <= n; i++) {
@@ -70,10 +81,10 @@ export default function Home() {
 
         data.p_otk = 0;
         data.Q = 1 - data.p_otk;
-        data.A = data.Q * formattedY;
+        data.A = data.Q * y;
 
         if (n > 1) {
-            data.k = formattedY / data.u;
+            data.k = y / data.u;
         } else {
             data.k = data.p;
         }
@@ -91,9 +102,9 @@ export default function Home() {
 
         // t0
         if (n > 1) {
-            data.t0 = data.r0 / formattedY;
+            data.t0 = data.r0 / y;
         } else {
-            data.t0 = pow(data.p, 2) / (formattedY * (1 - data.p))
+            data.t0 = pow(data.p, 2) / (y * (1 - data.p))
         }
 
         if (n == 1) {
@@ -101,8 +112,80 @@ export default function Home() {
             data.t_sist = t + data.t0;
         }
 
+        // Tables
+        const y_array = [0.01, 0.05, 0.1, 0.15, 0.2, y, 0.3, 0.35, 0.4, 0.45];
+        const t_array = [1, 2, 4, t, 10, 20, 30, 40, 50, 60];
+        data.tables = {};
+        data.tables.r0_through_y = {};
+        data.tables.r0_through_y.y = y_array;
+        data.tables.r0_through_y.x = [];
+
+        for (let i in y_array) {
+            const u = 1 / t;
+
+            const p = y_array[i] / u;
+
+            let table_p0 = 1;
+
+            if (n > 1) {
+                for (let i = 1; i <= n; i++) {
+                    table_p0 = table_p0 + (pow(p, i) / i);
+                }
+
+                table_p0 = pow(table_p0, -1);
+            } else {
+                table_p0 = table_p0 - p;
+            }
+
+            if (n > 1) {
+                const r0 = (
+                    pow(p, Number(n) + 1) * table_p0
+                ) / (
+                    n * factorial(n) * pow(1 - (p / n), 2)
+                )
+                data.tables.r0_through_y.x.push(r0)
+            } else {
+                const r0 = pow(p, 2) / (1 - p);
+                data.tables.r0_through_y.x.push(r0)
+            }
+        }
+
+        data.tables.r0_through_t = {};
+        data.tables.r0_through_t.y = t_array;
+        data.tables.r0_through_t.x = [];
+        for (let i in t_array) {
+            const u = 1 / t_array[i];
+
+            const p = y / u;
+
+            let table_p0 = 1;
+
+            if (n > 1) {
+                for (let i = 1; i <= n; i++) {
+                    table_p0 = table_p0 + (pow(p, i) / i);
+                }
+
+                table_p0 = pow(table_p0, -1);
+            } else {
+                table_p0 = table_p0 - p;
+            }
+
+            if (n > 1) {
+                const r0 = (
+                    pow(p, Number(n) + 1) * table_p0
+                ) / (
+                    n * factorial(n) * pow(1 - (p / n), 2)
+                )
+                data.tables.r0_through_t.x.push(r0)
+            } else {
+                const r0 = pow(p, 2) / (1 - p);
+                data.tables.r0_through_t.x.push(r0)
+            }
+        }
+
+        // Charts
         data.charts = {};
-        data.charts.y = [formattedY.toFixed(2), 1, 2, 4, 10, 50, 200];
+        data.charts.y = [y.toFixed(2), 1, 2, 4, 10, 50, 200];
         data.charts.p = data.charts.y.map((item) => {
             return item * t;
         });
@@ -120,13 +203,29 @@ export default function Home() {
         setResult(data);
     }
 
+    const getTablesData = () => {
+
+    }
+
     useEffect(() => {
         setResult(null);
+        setSmoError(false);
     }, [n, y, t, queueCount, endlessQueue])
 
     return (
-        <Container>
+        <Container paddingY={20}>
             <Box>
+                <Text>
+                    <b>Задача: </b>На контейнерную площадку с двумя кранами прибывает простейший
+                    поток автомашин с интенсивностью 17 автомашин в час. Время погрузки-
+                    выгрузки показательное, составляет в среднем 6 минут (обслt ). Очередь
+                    неограниченна.
+                </Text>
+                <Text className={"mt-2"}>
+                    17 машин в час = { (17 / 60).toFixed(4) } в минуту
+                </Text>
+            </Box>
+            <Box className={"mt-8"}>
                 <div>
                     <Text mb='8px'>Количество каналов</Text>
                     <Input
@@ -136,7 +235,7 @@ export default function Home() {
                     />
                 </div>
                 <div>
-                    <Text mb='8px'>Интенсивность машин (в часах)</Text>
+                    <Text mb='8px'>Интенсивность машин</Text>
                     <Input
                         value={y}
                         onChange={(event) => setY(event.target.value)}
@@ -144,7 +243,7 @@ export default function Home() {
                     />
                 </div>
                 <div>
-                    <Text mb='8px'>Время погрузки (в минутах)</Text>
+                    <Text mb='8px'>Время погрузки</Text>
                     <Input
                         value={t}
                         onChange={(event) => setT(event.target.value)}
@@ -187,6 +286,13 @@ export default function Home() {
                     </Button>
                 </ButtonGroup>
             </Box>
+            { smoError ? (
+                <Box>
+                    <Text>
+                        СМО не работает из-за неограниченно возрастающей очереди
+                    </Text>
+                </Box>
+            ) : null}
             { result ? (
                 <Box>
                     <Text>
@@ -256,7 +362,8 @@ export default function Home() {
                             Различные значения λ для расчетов A и K: { result.charts.y.join(", ") }
                         </Text>
                     ) : null}
-                    { result.charts ? (
+
+                    { result.tables.r0_through_y ? (
                         <Line
                             options={{
                                 responsive: true,
@@ -266,15 +373,15 @@ export default function Home() {
                                     },
                                     title: {
                                         display: true,
-                                        text: 'Зависимость среднего числа занятых линий связи от интенсивности входного потока',
+                                        text: 'Зависимость средней длины очереди от интенсивности входного потока',
                                     },
                                 },
                             }}
                             data={{
-                                labels: result.charts.y,
+                                labels: result.tables.r0_through_y.y,
                                 datasets: [
                                     {
-                                        data: result.charts.K,
+                                        data: result.tables.r0_through_y.x,
                                         borderColor: 'rgb(255, 99, 132)',
                                         backgroundColor: 'rgba(255, 99, 132, 0.5)',
                                     }
@@ -282,7 +389,8 @@ export default function Home() {
                             }}
                         />
                     ) : null}
-                    { result.charts ? (
+
+                    { result.tables.r0_through_t ? (
                         <Line
                             options={{
                                 responsive: true,
@@ -292,15 +400,15 @@ export default function Home() {
                                     },
                                     title: {
                                         display: true,
-                                        text: 'Зависимость абсолютной пропускной способности от интенсивности входного потока',
+                                        text: 'Зависимость средней длины очереди от времени обслуживания',
                                     },
                                 },
                             }}
                             data={{
-                                labels: result.charts.y,
+                                labels: result.tables.r0_through_t.y,
                                 datasets: [
                                     {
-                                        data: result.charts.A,
+                                        data: result.tables.r0_through_t.x,
                                         borderColor: 'rgb(255, 99, 132)',
                                         backgroundColor: 'rgba(255, 99, 132, 0.5)',
                                     }
