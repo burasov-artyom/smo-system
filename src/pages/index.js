@@ -203,10 +203,6 @@ export default function Home() {
         setResult(data);
     }
 
-    const getTablesData = () => {
-
-    }
-
     useEffect(() => {
         setResult(null);
         setSmoError(false);
